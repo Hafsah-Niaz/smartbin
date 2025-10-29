@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>BinBuddy Monitoring</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+  <style>
+    body {
+      scroll-behavior: smooth;
+      background-color: #f5fdf6;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+    section {
+      padding: 70px 20px;
+      min-height: 100vh;
+    }
+    .navbar {
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+    }
+    .hero {
+      background: linear-gradient(120deg, #28a745, #218838);
+      color: white;
+      padding: 100px 20px;
+      border-radius: 10px;
+      text-align: center;
+    }
+    .hero h1 {
+      font-size: 3rem;
+      font-weight: bold;
+    }
+    .hero p {
+      font-size: 1.3rem;
+    }
+    .bin-card {
+      border: 1px solid #d4edda;
+      border-radius: 10px;
+      padding: 20px;
+      margin-bottom: 20px;
+      background: #ffffff;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+      text-align: center;
+      transition: transform 0.2s ease;
+    }
+    .bin-card:hover {
+      transform: translateY(-5px);
+    }
+    .bin-icon {
+      font-size: 2.5rem;
+      margin-bottom: 10px;
+    }
+    .complaint-card {
+      margin-bottom: 15px;
+      padding: 15px;
+      border-radius: 10px;
+      background: #e9f7ef;
+      border-left: 6px solid #28a745;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+    }
+    .complaint-card.resolved {
+      background: #d4edda !important;
+      border-left: 6px solid #155724;
+      opacity: 0.8;
+    }
+    h2 {
+      color: #218838;
+      margin-bottom: 25px;
+      font-weight: bold;
+    }
+    .progress {
+      background-color: #e9ecef;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+  </style>
+</head>
+<body>
+  <!-- ✅ Navbar -->
+<nav class="navbar navbar-expand-lg navbar-dark bg-success shadow" style="padding: 0.5rem 1rem;">
+  <div class="container-fluid">
+    <a class="navbar-brand fw-bold text-white" href="#" style="font-size: 1.8rem;">🚮 BinBuddy</a>
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarNav">
+      <ul class="navbar-nav ms-auto">
+        <li class="nav-item">
+          <a class="nav-link fw-bold text-white" href="#about" style="font-size: 1.2rem;">About</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link fw-bold text-white" href="#dashboard" style="font-size: 1.2rem;">Dashboard</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link fw-bold text-white" href="#complaints" style="font-size: 1.2rem;">Complaints</a>
+        </li>
+      </ul>
+    </div>
+  </div>
+</nav>
+
+
+  <!-- ✅ About Section -->
+<section id="about" style="padding: 60px 20px; background-color: #f0fdf4;">
+  <div class="container hero" style="max-width: 1200px; margin: auto; text-align: center;">
+    
+    <!-- Inner transparent container with no border -->
+    <div style="background: linear-gradient(120deg, #28a745, #218838); padding: 40px; border-radius: 15px; display: inline-block; text-align: center; box-shadow: none;">
+      <h1 class="fw-bold" style="font-size: 3rem; margin-bottom: 20px; color: white;">Welcome to BinBuddy</h1>
+      <p class="lead" style="font-size: 1.5rem; margin-bottom: 30px; color: white;">Smart Garbage Monitoring & Complaint Handling System</p>
+      <p style="font-size: 1.3rem; line-height: 1.8; text-align: center; color: white;">
+        BinBuddy is designed to revolutionize the way communities manage waste by combining advanced technology with user-friendly interfaces. Our system continuously monitors garbage levels in bins across neighborhoods, sending real-time alerts 🚨 when immediate attention is required. Residents and municipal authorities can track bin statuses, report issues, and resolve complaints effortlessly, ensuring no garbage overflow goes unnoticed. By integrating smart notifications, data-driven insights, and a seamless complaint management system, BinBuddy promotes accountability, environmental responsibility, and community engagement. With our platform, waste management is no longer reactive but proactive, efficient, and sustainable. Together, we can build cleaner, healthier, and smarter cities where every citizen contributes to maintaining a pristine environment.
+      </p>
+    </div>
+
+  </div>
+</section>
+
+
+
+  <!-- ✅ Dashboard Section -->
+  <section id="dashboard">
+    <div class="container">
+      <h2>📊 Garbage Level Dashboard</h2>
+      <div class="row" id="binList">
+        <p>Loading bins...</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ✅ Complaints Section -->
+  <section id="complaints" class="bg-light">
+    <div class="container">
+      <h2>📝 Complaints</h2>
+      <div id="complaintList">
+        <p>Loading complaints...</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Alert Sound -->
+  <audio id="alertSound" src="https://actions.google.com/sounds/v1/alarms/beep_short.ogg"></audio>
+
+  <!-- ✅ Firebase Script -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-app.js";
+    import { getDatabase, ref, onValue, update } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-database.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyALWpSHmSvZc6aj4YStvtjENMEtdVodmNw",
+      authDomain: "smart-bin-ac435.firebaseapp.com",
+      databaseURL: "https://smart-bin-ac435-default-rtdb.firebaseio.com",
+      projectId: "smart-bin-ac435",
+      storageBucket: "smart-bin-ac435.appspot.com",
+      messagingSenderId: "30786360622",
+      appId: "1:30786360622:web:951791dd45101c05c216bf",
+      measurementId: "G-5BMEJ5NJME"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+
+    const MAX_DEPTH = 15; // cm - empty depth
+
+    // ✅ Bin Levels
+    // ✅ Bin Levels
+const binRef = ref(db, "bins");
+onValue(binRef, (snapshot) => {
+  const bins = snapshot.val() || {};
+  let html = "";
+  for (let binId in bins) {
+    const depth = bins[binId].level_cm ?? MAX_DEPTH;
+    const location = bins[binId].location || "Unknown";
+
+    // Convert cm -> %
+    let fillPercent = Math.round(((MAX_DEPTH - depth) / MAX_DEPTH) * 100);
+    if (fillPercent < 0) fillPercent = 0;
+    if (fillPercent > 100) fillPercent = 100;
+
+    // Color & icon logic
+    let barClass = "bg-success";
+    let icon = "🟢";
+    if (fillPercent >= 50 && fillPercent < 80) { 
+      barClass = "bg-warning"; 
+      icon = "🟡"; 
+    }
+   
+    // Alert
+if (fillPercent >= 80) {
+  document.getElementById("alertSound").play();
+barClass = "bg-danger"; 
+      icon = "🔴"; 
+  // Show popup alert with bin details
+  document.getElementById("binAlertBody").innerHTML = `
+    🚮 <b>${binId.toUpperCase()}</b> at <b>${location}</b> is <b>${fillPercent}% full</b>.
+    Immediate action required!
+  `;
+  const modal = new bootstrap.Modal(document.getElementById("binAlertModal"));
+  modal.show();
+}
+
+
+    html += `
+      <div class="col-md-4">
+        <div class="bin-card">
+          <div class="bin-icon">${icon}</div>
+          <h5>${binId.toUpperCase()}</h5>
+          <p><b>Location:</b> ${location}</p>
+          <p><b>Level:</b> ${fillPercent}% full</p>
+          <div class="progress" style="height: 25px;">
+            <div class="progress-bar ${barClass}" role="progressbar" style="width:${fillPercent}%">
+              ${fillPercent}%
+            </div>
+          </div>
+        </div>
+      </div>`;
+  }
+  document.getElementById("binList").innerHTML = html || "<p>No bin data</p>";
+});
+
+
+    // ✅ Complaints
+    const complaintRef = ref(db, "complaints");
+    onValue(complaintRef, (snapshot) => {
+      const complaints = snapshot.val() || {};
+      let html = "";
+      for (let id in complaints) {
+        const c = complaints[id];
+        const isResolved = c.resolved === true;
+
+        html += `
+          <div class="complaint-card ${isResolved ? 'resolved' : ''}">
+            <strong>${c.name}</strong> (${c.location}) <br>
+            <b>Issue:</b> ${c.issue} <br>
+            <b>Date:</b> ${c.date || ''} <br>
+            <b>Status:</b> ${isResolved ? "✅ Resolved" : "❌ Pending"}
+            <div class="mt-2">
+              ${!isResolved ? `<button class="btn btn-sm btn-success resolve-btn" data-id="${id}">Mark as Resolved</button>` : ""}
+            </div>
+          </div>`;
+      }
+      document.getElementById("complaintList").innerHTML = html || "<p>No complaints yet</p>";
+
+      // Attach event listeners
+      document.querySelectorAll(".resolve-btn").forEach(btn => {
+        btn.addEventListener("click", (e) => {
+          const complaintId = e.target.getAttribute("data-id");
+          const complaintPath = ref(db, "complaints/" + complaintId);
+          update(complaintPath, { resolved: true });
+        });
+      });
+    });
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <!-- 🚨 Alert Modal -->
+<div class="modal fade" id="binAlertModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header bg-danger text-white">
+        <h5 class="modal-title">⚠️ Bin Alert</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body" id="binAlertBody">
+        A bin has crossed the safe threshold!
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

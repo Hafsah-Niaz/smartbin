@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Report Bin Issue | BinBuddy</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1"> <!-- Mobile scaling -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+  <style>
+    body {
+      background: #f5fdf6;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+    .form-container {
+      max-width: 600px;
+      margin: 40px auto; /* Reduced margin for smaller screens */
+      background: #ffffff;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+    h2 {
+      text-align: center;
+      color: #218838;
+      margin-bottom: 20px;
+      font-weight: bold;
+      font-size: 1.5rem;
+    }
+    .form-control {
+      border-radius: 8px;
+      padding: 12px;
+      margin-bottom: 15px;
+      font-size: 1rem;
+    }
+    .btn-submit {
+      width: 100%;
+      padding: 12px;
+      border-radius: 8px;
+      background: #28a745;
+      color: white;
+      font-size: 1.1rem;
+      font-weight: bold;
+      transition: background 0.2s;
+    }
+    .btn-submit:hover {
+      background: #218838;
+    }
+
+    /* Mobile adjustments */
+    @media (max-width: 576px) {
+      .form-container {
+        margin: 20px 10px; /* Reduce side margins on phones */
+        padding: 15px;
+      }
+      h2 {
+        font-size: 1.3rem;
+      }
+      .form-control {
+        font-size: 0.95rem;
+        padding: 10px;
+      }
+      .btn-submit {
+        font-size: 1rem;
+        padding: 10px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="form-container">
+      <h2>📝 Report a Bin Issue</h2>
+      <form id="complaintForm">
+        <input type="text" id="name" class="form-control" placeholder="Your Name" required>
+        <input type="text" id="address" class="form-control" placeholder="Your Address" required>
+        <input type="text" id="number" class="form-control" placeholder="Phone Number" required>
+        <input type="date" id="date" class="form-control" required>
+        <input type="text" id="binNumber" class="form-control" readonly>
+        <input type="text" id="location" class="form-control" readonly>
+        <textarea id="issue" class="form-control" rows="4" placeholder="Describe the issue..." required></textarea>
+        <button type="submit" class="btn btn-submit">Submit Complaint</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Firebase -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-app.js";
+    import { getDatabase, ref, push } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-database.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyALWpSHmSvZc6aj4YStvtjENMEtdVodmNw",
+      authDomain: "smart-bin-ac435.firebaseapp.com",
+      databaseURL: "https://smart-bin-ac435-default-rtdb.firebaseio.com",
+      projectId: "smart-bin-ac435",
+      storageBucket: "smart-bin-ac435.appspot.com",
+      messagingSenderId: "30786360622",
+      appId: "1:30786360622:web:951791dd45101c05c216bf",
+      measurementId: "G-5BMEJ5NJME"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+
+    // Auto-fill today’s date
+    document.getElementById("date").value = new Date().toISOString().split("T")[0];
+
+    // Auto-fill bin + location from QR params
+    const params = new URLSearchParams(window.location.search);
+    document.getElementById("binNumber").value = params.get("bin") || "Unknown";
+    document.getElementById("location").value = params.get("loc") || "Unknown";
+
+    // Form submission
+    document.getElementById("complaintForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const complaint = {
+        name: document.getElementById("name").value,
+        address: document.getElementById("address").value,
+        number: document.getElementById("number").value,
+        date: document.getElementById("date").value,
+        bin: document.getElementById("binNumber").value,
+        location: document.getElementById("location").value,
+        issue: document.getElementById("issue").value,
+        resolved: false,
+        timestamp: new Date().toISOString()
+      };
+      await push(ref(db, "complaints"), complaint);
+      alert("✅ Complaint submitted successfully!");
+      e.target.reset();
+    });
+  </script>
+  
+</body>
+</html>
